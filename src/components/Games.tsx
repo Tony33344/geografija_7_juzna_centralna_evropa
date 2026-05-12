@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ArrowUpDown, Mountain, Flame, Droplets, Check, X, RefreshCw, Star, Trophy, Zap, Sparkles } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ArrowUpDown, Mountain, Flame, Droplets, Check, X, RefreshCw, Star, Trophy, Zap, Sparkles, Clock, Globe, MapPin, Award, Timer } from 'lucide-react';
 
 // === ALPINE ZONES GAME ===
 const alpineZones = [
@@ -82,8 +82,50 @@ const wordSearchWords = [
   { word: 'ADRIATIK', found: false, hint: 'Morje med Italijo in Balkanom' },
 ];
 
+// === GEOGRAPHY TRIVIA ===
+const triviaFacts = [
+  { fact: 'Donava teče skozi 9 držav — več kot katera koli druga reka na svetu!', icon: '🌊' },
+  { fact: 'Sredozemsko morje je dolgo približno 3.800 km — to je razdalja od Slovenije do Kanade!', icon: '🌍' },
+  { fact: 'Alpe so nastale pred približno 30 milijoni let, ko sta trčili Afriška in Evropska plošča.', icon: '⛰️' },
+  { fact: 'Vezuv je leta 79 n. št. uničil mesto Pompeji. Še vedno je aktiven vulkan!', icon: '🌋' },
+  { fact: 'Panonsko morje je nekoč prekrivalo celotno Panonsko nižino. Ostanek je Blatno jezero.', icon: '💧' },
+  { fact: 'Gibraltarska vrata so široka le 14 km — to je ožje od razdalje Ljubljana-Domžale!', icon: '🚢' },
+  { fact: 'V Sredozemskem morju živi več kot 17.000 vrst morskih organizmov.', icon: '🐠' },
+  { fact: 'Alpe so najvišje gorstvo Evrope — najvišji vrh Mont Blanc meri 4.810 m.', icon: '🏔️' },
+  { fact: 'Ren je najbolj prometna reka v Evropi — letno prepelje več kot 200 milijonov ton tovora!', icon: '⚓' },
+  { fact: 'Samo poleti obišče Sredozemlje okrog 200 milijonov turistov — to je 3x več kot prebivalcev Francije!', icon: '🏖️' },
+];
+
+// === TIMED CHALLENGE ===
+const timedQuestions = [
+  { question: 'Katero gorovje je najvišje v Evropi?', answer: 'Alpe', options: ['Alpe', 'Karpati', 'Pireneji', 'Apenini'] },
+  { question: 'Skozi koliko držav teče Donava?', answer: '9', options: ['5', '7', '9', '11'] },
+  { question: 'Kateri vulkan je uničil Pompeje?', answer: 'Vezuv', options: ['Etna', 'Vezuv', 'Stromboli', 'Kilimandžaro'] },
+  { question: 'Kaj je makija?', answer: 'Zimzeleno grmičevje', options: ['Vrsta ribe', 'Zimzeleno grmičevje', 'Vulkanska kamnina', 'Vrsta podnebja'] },
+  { question: 'Katera reka teče skozi Padska nižino?', answer: 'Pad', options: ['Donava', 'Ren', 'Pad', 'Sava'] },
+  { question: 'Koliko držav je v Evropski uniji?', answer: '27', options: ['25', '27', '28', '30'] },
+  { question: 'Kaj je puhlica?', answer: 'Sedimentna kamnina', options: ['Vrsta rastline', 'Sedimentna kamnina', 'Vulkanski pepel', 'Morski tok'] },
+  { question: 'Kje leži Blatno jezero?', answer: 'Madžarska', options: ['Slovenija', 'Hrvaška', 'Madžarska', 'Srbija'] },
+  { question: 'Kaj je epicenter?', answer: 'Točka najmočnejših sunkov', options: ['Središče Zemlje', 'Točka najmočnejših sunkov', 'Vrh vulkana', 'Morska ožina'] },
+  { question: 'Kateri otok je največji v Sredozemlju?', answer: 'Sicilija', options: ['Korzika', 'Sardinija', 'Sicilija', 'Kreta'] },
+];
+
+// === COUNTRY EXPLORER ===
+const countryFacts = [
+  { country: 'Slovenija', capital: 'Ljubljana', population: '2,1 milijona', area: '20.273 km²', fact: 'Ena redkih držav, ki leži na stičišču Alp, Sredozemlja, Panonske nižine in Dinarskega gorstva.', flag: '🇸🇮' },
+  { country: 'Italija', capital: 'Rim', population: '59 milijonov', area: '301.340 km²', fact: 'Ima največ Unescovih spomenikov na svetu — kar 58!', flag: '🇮🇹' },
+  { country: 'Španija', capital: 'Madrid', population: '47 milijonov', area: '505.990 km²', fact: 'Ima največ vinogradov na svetu, a je šele tretja po pridelavi vina.', flag: '🇪🇸' },
+  { country: 'Francija', capital: 'Pariz', population: '68 milijonov', area: '643.801 km²', fact: 'Največja država v EU po površini in najbolj obiskana država na svetu.', flag: '🇫🇷' },
+  { country: 'Nemčija', capital: 'Berlin', population: '84 milijonov', area: '357.022 km²', fact: 'Ima več kot 1.500 različnih vrst piva in najstarejšo univerzo v Evropi (Heidelberg, 1386).', flag: '🇩🇪' },
+  { country: 'Avstrija', capital: 'Dunaj', population: '9 milijonov', area: '83.871 km²', fact: 'Dunaj je bil 8x zapored izbran za najboljše mesto za življenje na svetu.', flag: '🇦🇹' },
+  { country: 'Švica', capital: 'Bern', population: '8,7 milijona', area: '41.285 km²', fact: 'Ima 4 uradne jezike in več kot 1.500 jezer — nobena točka ni dlje kot 16 km od jezera!', flag: '🇨🇭' },
+  { country: 'Grčija', capital: 'Atene', population: '10,4 milijona', area: '131.957 km²', fact: 'Ima več kot 6.000 otokov, od katerih je poseljenih le 227.', flag: '🇬🇷' },
+  { country: 'Hrvaška', capital: 'Zagreb', population: '3,9 milijona', area: '56.594 km²', fact: 'Ima več kot 1.200 otokov in je ena izmed 10 najbolj obiskanih turističnih destinacij.', flag: '🇭🇷' },
+  { country: 'Madžarska', capital: 'Budimpešta', population: '9,6 milijona', area: '93.028 km²', fact: 'Budimpešta ima največ termalnih vrelcev na svetu — kar 118!', flag: '🇭🇺' },
+];
+
 export default function Games() {
-  const [activeGame, setActiveGame] = useState<'zones' | 'volcano' | 'pollution' | 'memory' | 'matching' | 'wordsearch'>('zones');
+  const [activeGame, setActiveGame] = useState<'zones' | 'volcano' | 'pollution' | 'memory' | 'matching' | 'wordsearch' | 'trivia' | 'timed' | 'explorer'>('zones');
 
   return (
     <div className="max-w-4xl mx-auto space-y-4">
@@ -113,6 +155,15 @@ export default function Games() {
         <button onClick={() => setActiveGame('wordsearch')} className={`text-sm px-3 py-1.5 rounded-lg ${activeGame === 'wordsearch' ? 'text-white' : ''}`} style={activeGame === 'wordsearch' ? { background: 'var(--accent)' } : { background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
           <Zap size={14} className="inline mr-1" /> Iskanje besed
         </button>
+        <button onClick={() => setActiveGame('trivia')} className={`text-sm px-3 py-1.5 rounded-lg ${activeGame === 'trivia' ? 'text-white' : ''}`} style={activeGame === 'trivia' ? { background: 'var(--accent)' } : { background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+          <Globe size={14} className="inline mr-1" /> Zanimivosti
+        </button>
+        <button onClick={() => setActiveGame('timed')} className={`text-sm px-3 py-1.5 rounded-lg ${activeGame === 'timed' ? 'text-white' : ''}`} style={activeGame === 'timed' ? { background: 'var(--accent)' } : { background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+          <Timer size={14} className="inline mr-1" /> Proti času
+        </button>
+        <button onClick={() => setActiveGame('explorer')} className={`text-sm px-3 py-1.5 rounded-lg ${activeGame === 'explorer' ? 'text-white' : ''}`} style={activeGame === 'explorer' ? { background: 'var(--accent)' } : { background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+          <MapPin size={14} className="inline mr-1" /> Raziskuj države
+        </button>
       </div>
 
       {activeGame === 'zones' && <AlpineZonesGame />}
@@ -121,6 +172,9 @@ export default function Games() {
       {activeGame === 'memory' && <MemoryGame />}
       {activeGame === 'matching' && <CapitalMatchingGame />}
       {activeGame === 'wordsearch' && <WordSearchGame />}
+      {activeGame === 'trivia' && <TriviaGame />}
+      {activeGame === 'timed' && <TimedChallengeGame />}
+      {activeGame === 'explorer' && <CountryExplorerGame />}
     </div>
   );
 }
@@ -615,6 +669,252 @@ function WordSearchGame() {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function TriviaGame() {
+  const [current, setCurrent] = useState(0);
+  const [seen, setSeen] = useState<Set<number>>(new Set());
+
+  const nextFact = () => {
+    if (seen.size >= triviaFacts.length) {
+      setSeen(new Set());
+    }
+    let next;
+    do { next = Math.floor(Math.random() * triviaFacts.length); } while (seen.has(next) && seen.size < triviaFacts.length);
+    setCurrent(next);
+    setSeen(prev => new Set([...prev, next]));
+  };
+
+  const fact = triviaFacts[current];
+
+  return (
+    <div className="card space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold">Zanimivosti</h3>
+        <span className="badge badge-star"><Award size={12} /> {seen.size} / {triviaFacts.length}</span>
+      </div>
+      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+        Poišči zanimive podatke o Evropi, ki jih morda še ne poznaš.
+      </p>
+
+      <div className="p-6 rounded-xl text-center animate-fade-in" style={{ background: 'var(--bg-secondary)' }}>
+        <div className="text-4xl mb-3">{fact.icon}</div>
+        <p className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>{fact.fact}</p>
+      </div>
+
+      <div className="flex gap-2 justify-center">
+        <button onClick={nextFact} className="btn-primary inline-flex items-center gap-1.5">
+          <Zap size={14} /> Naslednja zanimivost
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TimedChallengeGame() {
+  const [currentQ, setCurrentQ] = useState(0);
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(15);
+  const [gameOver, setGameOver] = useState(false);
+  const [started, setStarted] = useState(false);
+  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const shuffled = useRef(timedQuestions.sort(() => Math.random() - 0.5).slice(0, 7));
+
+  const startGame = () => {
+    setStarted(true);
+    setCurrentQ(0);
+    setScore(0);
+    setTimeLeft(15);
+    setGameOver(false);
+    setFeedback(null);
+    shuffled.current = timedQuestions.sort(() => Math.random() - 0.5).slice(0, 7);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          setGameOver(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleAnswer = (ans: string) => {
+    if (feedback || gameOver) return;
+    const correct = ans === shuffled.current[currentQ].answer;
+    if (correct) {
+      setScore(s => s + 1);
+      setFeedback('correct');
+    } else {
+      setFeedback('wrong');
+    }
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    setTimeout(() => {
+      if (currentQ + 1 >= shuffled.current.length) {
+        setGameOver(true);
+      } else {
+        setCurrentQ(prev => prev + 1);
+        setTimeLeft(15);
+        setFeedback(null);
+        timerRef.current = setInterval(() => {
+          setTimeLeft(prev => {
+            if (prev <= 1) {
+              if (timerRef.current) clearInterval(timerRef.current);
+              setGameOver(true);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
+    }, 1000);
+  };
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  if (!started) {
+    return (
+      <div className="card text-center py-6 space-y-3">
+        <h3 className="font-semibold">Izziv proti času</h3>
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+          7 vprašanj, 15 sekund na vsako. Koliko pravilnih odgovorov uspeš najti?
+        </p>
+        <button onClick={startGame} className="btn-primary inline-flex items-center gap-1.5">
+          <Timer size={16} /> Začni izziv
+        </button>
+      </div>
+    );
+  }
+
+  if (gameOver) {
+    const percentage = Math.round((score / shuffled.current.length) * 100);
+    const badgeClass = percentage >= 80 ? 'badge-gold' : percentage >= 60 ? 'badge-silver' : 'badge-bronze';
+    return (
+      <div className="card text-center py-6 animate-fade-in space-y-3">
+        <h3 className="font-semibold">Izziv končan!</h3>
+        <p className="text-3xl font-bold" style={{ color: 'var(--accent)' }}>{score} / {shuffled.current.length}</p>
+        <div className={`badge ${badgeClass}`}>
+          <Star size={12} /> {percentage}% natančnost
+        </div>
+        <button onClick={startGame} className="btn-primary text-sm inline-flex items-center gap-1.5">
+          <RefreshCw size={14} /> Ponovi
+        </button>
+      </div>
+    );
+  }
+
+  const q = shuffled.current[currentQ];
+  const progress = ((currentQ) / shuffled.current.length) * 100;
+
+  return (
+    <div className="card space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold">Izziv proti času</h3>
+        <div className="streak-counter" style={{ background: timeLeft <= 5 ? '#ef444415' : 'var(--bg-secondary)', color: timeLeft <= 5 ? 'var(--danger)' : 'var(--text-primary)' }}>
+          <Clock size={14} /> {timeLeft}s
+        </div>
+      </div>
+
+      <div className="w-full rounded-full h-2" style={{ background: 'var(--bg-secondary)' }}>
+        <div className="progress-bar h-2 rounded-full" style={{ width: `${progress}%`, background: 'var(--accent)' }} />
+      </div>
+
+      <div className="text-center py-4">
+        <div className="text-sm mb-1" style={{ color: 'var(--text-muted)' }}>Vprašanje {currentQ + 1} / {shuffled.current.length}</div>
+        <div className="text-lg font-bold" style={{ color: 'var(--accent)' }}>{q.question}</div>
+      </div>
+
+      {feedback && (
+        <div className={`text-center py-2 text-sm font-medium ${feedback === 'correct' ? 'animate-bounce' : 'animate-shake'}`} style={{ background: feedback === 'correct' ? '#22c55e15' : '#ef444415', color: feedback === 'correct' ? 'var(--success)' : 'var(--danger)' }}>
+          {feedback === 'correct' ? <><Check size={14} className="inline mr-1" /> Pravilno!</> : <><X size={14} className="inline mr-1" /> Napačno!</>}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        {q.options.map(opt => (
+          <button
+            key={opt}
+            onClick={() => handleAnswer(opt)}
+            disabled={!!feedback}
+            className="p-3 rounded-lg text-sm font-medium transition-all"
+            style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CountryExplorerGame() {
+  const [current, setCurrent] = useState(0);
+  const country = countryFacts[current];
+
+  return (
+    <div className="card space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold">Raziskuj države</h3>
+        <div className="flex gap-1">
+          {countryFacts.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className="w-2.5 h-2.5 rounded-full transition-all"
+              style={{ background: i === current ? 'var(--accent)' : 'var(--bg-secondary)' }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="text-center py-4 animate-fade-in">
+        <div className="text-5xl mb-3">{country.flag}</div>
+        <h4 className="text-xl font-bold mb-1" style={{ color: 'var(--accent)' }}>{country.country}</h4>
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Glavno mesto: {country.capital}</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="p-3 rounded-lg text-center" style={{ background: 'var(--bg-secondary)' }}>
+          <div className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Prebivalci</div>
+          <div className="font-bold text-lg">{country.population}</div>
+        </div>
+        <div className="p-3 rounded-lg text-center" style={{ background: 'var(--bg-secondary)' }}>
+          <div className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Površina</div>
+          <div className="font-bold text-lg">{country.area}</div>
+        </div>
+      </div>
+
+      <div className="p-4 rounded-lg" style={{ background: 'var(--accent)10' }}>
+        <div className="flex items-center gap-2 mb-1">
+          <Zap size={14} style={{ color: 'var(--accent)' }} />
+          <span className="text-xs font-semibold uppercase" style={{ color: 'var(--accent)' }}>Zanimivost</span>
+        </div>
+        <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{country.fact}</p>
+      </div>
+
+      <div className="flex justify-between">
+        <button
+          onClick={() => setCurrent(prev => prev === 0 ? countryFacts.length - 1 : prev - 1)}
+          className="btn-secondary text-sm"
+        >
+          ← Prejšnja
+        </button>
+        <button
+          onClick={() => setCurrent(prev => prev === countryFacts.length - 1 ? 0 : prev + 1)}
+          className="btn-secondary text-sm"
+        >
+          Naslednja →
+        </button>
+      </div>
     </div>
   );
 }
