@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ChevronDown, ChevronUp, Bookmark, Highlighter } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Bookmark, Highlighter, Lightbulb, Info, ChevronRight } from 'lucide-react';
 import { chapters } from '../data/textbookContent';
 import { glossary } from '../data/glossaryData';
 import type { ProgressState } from '../hooks/useProgress';
@@ -80,23 +80,12 @@ export default function Textbook({ progress }: Props) {
                       <Highlighter size={14} style={{ color: 'var(--accent)' }} />
                       {section.title}
                     </h4>
-                    <div className="space-y-1.5">
-                      {section.content.map((paragraph, idx) => (
-                        <p
-                          key={idx}
-                          className="text-sm leading-relaxed"
-                          style={{ color: 'var(--text-secondary)' }}
-                          dangerouslySetInnerHTML={{ __html: highlightText(paragraph) }}
-                          onMouseMove={e => {
-                            const target = e.target as HTMLElement;
-                            if (target.tagName === 'MARK') {
-                              handleTermHover(target.textContent || '', e);
-                            }
-                          }}
-                          onMouseLeave={() => setHoveredTerm(null)}
-                        />
-                      ))}
-                    </div>
+                    <FormattedContent
+                      paragraphs={section.content}
+                      highlightText={highlightText}
+                      handleTermHover={handleTermHover}
+                      onLeave={() => setHoveredTerm(null)}
+                    />
                     {section.highlights && (
                       <div className="flex flex-wrap gap-1.5 mt-2">
                         {section.highlights.map(h => (
@@ -141,6 +130,176 @@ export default function Textbook({ progress }: Props) {
       )}
     </div>
   );
+}
+
+/* === FORMATTED CONTENT === */
+interface FormattedProps {
+  paragraphs: string[];
+  highlightText: (text: string) => string;
+  handleTermHover: (term: string, e: React.MouseEvent) => void;
+  onLeave: () => void;
+}
+
+function FormattedContent({ paragraphs, highlightText, handleTermHover, onLeave }: FormattedProps) {
+  // Detect list patterns
+  const isBullet = (text: string) => /^\s*[•\-\–]\s+/.test(text);
+  const isNumbered = (text: string) => /^\s*\d+[\)\.\:]\s+/.test(text);
+  const isLettered = (text: string) => /^\s*[a-zčšž]\)[\s\:]/.test(text.toLowerCase());
+  const isDefinition = (text: string) => /^[^,.]{2,40}\s+—\s+/.test(text);
+  const isShortFact = (text: string) => {
+    const clean = text.trim();
+    return clean.length < 80 && (clean.includes(':') || clean.includes('je') || clean.includes('so'));
+  };
+
+  const stripBullet = (text: string) => text.replace(/^\s*[•\-\–]\s+/, '');
+  const stripNumber = (text: string) => text.replace(/^\s*\d+[\)\.\:]\s+/, '');
+  const stripLetter = (text: string) => text.replace(/^\s*[a-zčšž]\)[\s\:]/i, '');
+
+  const renderParagraph = (text: string, idx: number) => {
+    const html = highlightText(text);
+
+    if (isDefinition(text)) {
+      const [term, ...rest] = text.split(' — ');
+      const definition = rest.join(' — ');
+      return (
+        <div key={idx} className="p-3 rounded-lg my-2" style={{ background: 'var(--accent)08', borderLeft: '3px solid var(--accent)' }}>
+          <div className="flex items-start gap-2">
+            <Lightbulb size={16} style={{ color: 'var(--accent)', marginTop: '2px', flexShrink: 0 }} />
+            <div>
+              <span className="font-semibold text-sm" style={{ color: 'var(--accent)' }} dangerouslySetInnerHTML={{ __html: highlightText(term) }} />
+              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}> — {definition}</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (isBullet(text)) {
+      return (
+        <div key={idx} className="flex items-start gap-2 my-1.5">
+          <ChevronRight size={14} style={{ color: 'var(--accent)', marginTop: '4px', flexShrink: 0 }} />
+          <p
+            className="text-sm leading-relaxed"
+            style={{ color: 'var(--text-secondary)' }}
+            dangerouslySetInnerHTML={{ __html: highlightText(stripBullet(text)) }}
+            onMouseMove={e => {
+              const target = e.target as HTMLElement;
+              if (target.tagName === 'MARK') handleTermHover(target.textContent || '', e);
+            }}
+            onMouseLeave={onLeave}
+          />
+        </div>
+      );
+    }
+
+    if (isNumbered(text)) {
+      const match = text.match(/^\s*(\d+)[\)\.\:]\s+/);
+      const num = match ? match[1] : '';
+      return (
+        <div key={idx} className="flex items-start gap-2.5 my-2">
+          <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'var(--accent)', color: '#fff' }}>
+            {num}
+          </span>
+          <p
+            className="text-sm leading-relaxed flex-1"
+            style={{ color: 'var(--text-secondary)' }}
+            dangerouslySetInnerHTML={{ __html: highlightText(stripNumber(text)) }}
+            onMouseMove={e => {
+              const target = e.target as HTMLElement;
+              if (target.tagName === 'MARK') handleTermHover(target.textContent || '', e);
+            }}
+            onMouseLeave={onLeave}
+          />
+        </div>
+      );
+    }
+
+    if (isLettered(text)) {
+      const match = text.match(/^\s*([a-zčšž])[\)\:\s]/i);
+      const letter = match ? match[1].toLowerCase() : '';
+      return (
+        <div key={idx} className="flex items-start gap-2.5 my-1.5 ml-2">
+          <span className="flex-shrink-0 w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold uppercase" style={{ background: 'var(--bg-secondary)', color: 'var(--accent)' }}>
+            {letter}
+          </span>
+          <p
+            className="text-sm leading-relaxed flex-1"
+            style={{ color: 'var(--text-secondary)' }}
+            dangerouslySetInnerHTML={{ __html: highlightText(stripLetter(text)) }}
+            onMouseMove={e => {
+              const target = e.target as HTMLElement;
+              if (target.tagName === 'MARK') handleTermHover(target.textContent || '', e);
+            }}
+            onMouseLeave={onLeave}
+          />
+        </div>
+      );
+    }
+
+    // Group short facts into a grid card
+    if (isShortFact(text)) {
+      return (
+        <div key={idx} className="p-2.5 rounded-lg my-1.5 flex items-start gap-2" style={{ background: 'var(--bg-secondary)' }}>
+          <Info size={14} style={{ color: 'var(--accent)', marginTop: '3px', flexShrink: 0 }} />
+          <p
+            className="text-sm leading-relaxed"
+            style={{ color: 'var(--text-secondary)' }}
+            dangerouslySetInnerHTML={{ __html: html }}
+            onMouseMove={e => {
+              const target = e.target as HTMLElement;
+              if (target.tagName === 'MARK') handleTermHover(target.textContent || '', e);
+            }}
+            onMouseLeave={onLeave}
+          />
+        </div>
+      );
+    }
+
+    // Default paragraph
+    return (
+      <p
+        key={idx}
+        className="text-sm leading-relaxed my-2"
+        style={{ color: 'var(--text-secondary)' }}
+        dangerouslySetInnerHTML={{ __html: html }}
+        onMouseMove={e => {
+          const target = e.target as HTMLElement;
+          if (target.tagName === 'MARK') handleTermHover(target.textContent || '', e);
+        }}
+        onMouseLeave={onLeave}
+      />
+    );
+  };
+
+  // Group consecutive bullets
+  const elements: React.ReactNode[] = [];
+  let currentBulletGroup: React.ReactNode[] = [];
+
+  paragraphs.forEach((text, idx) => {
+    if (isBullet(text) || isLettered(text)) {
+      currentBulletGroup.push(renderParagraph(text, idx));
+    } else {
+      if (currentBulletGroup.length > 0) {
+        elements.push(
+          <div key={`group-${idx}`} className="my-2 p-2 rounded-lg" style={{ background: 'var(--bg-secondary)30' }}>
+            {currentBulletGroup}
+          </div>
+        );
+        currentBulletGroup = [];
+      }
+      elements.push(renderParagraph(text, idx));
+    }
+  });
+
+  if (currentBulletGroup.length > 0) {
+    elements.push(
+      <div key="group-last" className="my-2 p-2 rounded-lg" style={{ background: 'var(--bg-secondary)30' }}>
+        {currentBulletGroup}
+      </div>
+    );
+  }
+
+  return <div>{elements}</div>;
 }
 
 /* === REAL IMAGES === */
