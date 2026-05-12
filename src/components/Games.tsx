@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ArrowUpDown, Mountain, Flame, Droplets, Check, X, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowUpDown, Mountain, Flame, Droplets, Check, X, RefreshCw, Star, Trophy, Zap, Sparkles } from 'lucide-react';
 
 // === ALPINE ZONES GAME ===
 const alpineZones = [
@@ -33,21 +33,70 @@ const pollutionData = [
   { cause: 'Ladijski promet', explanation: 'Izvržejo odpadke, pomanjkanje naprav za čiščenje odpadnih olj.', effect: 'Razlitje nafte, pogin morskih živali, ekološka škoda.' },
 ];
 
+// === MEMORY CARDS ===
+const memoryPairs = [
+  { id: 1, term: 'Alpe', match: 'Najvišje gorstvo Evrope' },
+  { id: 2, term: 'Apenini', match: 'Italijanski polotok' },
+  { id: 3, term: 'Karpati', match: 'Vzhodna Evropa' },
+  { id: 4, term: 'Pireneji', match: 'Španija-Francija' },
+  { id: 5, term: 'Sredozemlje', match: 'Toplo morje' },
+  { id: 6, term: 'Jadransko morje', match: 'Med Italijo in Balkanom' },
+  { id: 7, term: 'Črno morje', match: 'Med Turčijo in Balkanom' },
+  { id: 8, term: 'Donava', match: 'Druga najdaljša reka Evrope' },
+];
+
+// === COUNTRY-CAPITAL MATCHING ===
+const countryCapitals = [
+  { country: 'Slovenija', capital: 'Ljubljana' },
+  { country: 'Hrvaška', capital: 'Zagreb' },
+  { country: 'Srbija', capital: 'Beograd' },
+  { country: 'Bosna in Hercegovina', capital: 'Sarajevo' },
+  { country: 'Črna gora', capital: 'Podgorica' },
+  { country: 'Severna Makedonija', capital: 'Skopje' },
+  { country: 'Grčija', capital: 'Atene' },
+  { country: 'Bolgarija', capital: 'Sofija' },
+  { country: 'Romunija', capital: 'Bukarešta' },
+  { country: 'Madžarska', capital: 'Budimpešta' },
+];
+
+// === WORD SEARCH ===
+const wordSearchGrid = [
+  ['A', 'L', 'P', 'E', 'I', 'R', 'M', 'E', 'D', 'I'],
+  ['D', 'O', 'N', 'A', 'V', 'A', 'O', 'O', 'R', 'J'],
+  ['R', 'R', 'I', 'A', 'T', 'R', 'Z', 'S', 'A', 'A'],
+  ['I', 'I', 'N', 'E', 'N', 'E', 'N', 'E', 'V', 'D'],
+  ['A', 'J', 'I', 'N', 'A', 'K', 'I', 'G', 'A', 'N'],
+  ['T', 'A', 'S', 'I', 'S', 'I', 'R', 'A', 'P', 'A'],
+  ['I', 'K', 'O', 'A', 'R', 'P', 'A', 'T', 'I', 'N'],
+  ['C', 'O', 'R', 'S', 'I', 'K', 'A', 'L', 'I', 'O'],
+  ['S', 'T', 'R', 'A', 'I', 'T', 'S', 'R', 'K', 'N'],
+  ['K', 'R', 'A', 'T', 'I', 'B', 'A', 'L', 'A', 'K'],
+];
+
+const wordSearchWords = [
+  { word: 'ALPE', found: false, hint: 'Najvišje gorstvo Evrope' },
+  { word: 'DONAVA', found: false, hint: 'Reka, ki teče skozi več držav' },
+  { word: 'SREDNEMORJE', found: false, hint: 'Med Afriko, Azijo in Evropo' },
+  { word: 'KARPATI', found: false, hint: 'Gorovje v vzhodni Evropi' },
+  { word: 'KORZIKA', found: false, hint: 'Francoski otok v Sredozemlju' },
+  { word: 'ADRIATIK', found: false, hint: 'Morje med Italijo in Balkanom' },
+];
+
 export default function Games() {
-  const [activeGame, setActiveGame] = useState<'zones' | 'volcano' | 'pollution'>('zones');
+  const [activeGame, setActiveGame] = useState<'zones' | 'volcano' | 'pollution' | 'memory' | 'matching' | 'wordsearch'>('zones');
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="max-w-4xl mx-auto space-y-4">
       <div className="card">
         <h2 className="font-display text-xl font-bold mb-1">Mini-igre</h2>
         <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-          Utrjuj znanje skozi interaktivne aktivnosti.
+          Utrjuj znanje skozi interaktivne aktivnosti. Zbiraj točke in odkleni dosežke!
         </p>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <button onClick={() => setActiveGame('zones')} className={`text-sm px-3 py-1.5 rounded-lg ${activeGame === 'zones' ? 'text-white' : ''}`} style={activeGame === 'zones' ? { background: 'var(--accent)' } : { background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
-          <Mountain size={14} className="inline mr-1" /> Višinski pasovi v Alpah
+          <Mountain size={14} className="inline mr-1" /> Višinski pasovi
         </button>
         <button onClick={() => setActiveGame('volcano')} className={`text-sm px-3 py-1.5 rounded-lg ${activeGame === 'volcano' ? 'text-white' : ''}`} style={activeGame === 'volcano' ? { background: 'var(--accent)' } : { background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
           <Flame size={14} className="inline mr-1" /> Sestavi vulkan
@@ -55,11 +104,23 @@ export default function Games() {
         <button onClick={() => setActiveGame('pollution')} className={`text-sm px-3 py-1.5 rounded-lg ${activeGame === 'pollution' ? 'text-white' : ''}`} style={activeGame === 'pollution' ? { background: 'var(--accent)' } : { background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
           <Droplets size={14} className="inline mr-1" /> Onesnaževanje morja
         </button>
+        <button onClick={() => setActiveGame('memory')} className={`text-sm px-3 py-1.5 rounded-lg ${activeGame === 'memory' ? 'text-white' : ''}`} style={activeGame === 'memory' ? { background: 'var(--accent)' } : { background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+          <Sparkles size={14} className="inline mr-1" /> Spominske kartice
+        </button>
+        <button onClick={() => setActiveGame('matching')} className={`text-sm px-3 py-1.5 rounded-lg ${activeGame === 'matching' ? 'text-white' : ''}`} style={activeGame === 'matching' ? { background: 'var(--accent)' } : { background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+          <Star size={14} className="inline mr-1" /> Države - Mesta
+        </button>
+        <button onClick={() => setActiveGame('wordsearch')} className={`text-sm px-3 py-1.5 rounded-lg ${activeGame === 'wordsearch' ? 'text-white' : ''}`} style={activeGame === 'wordsearch' ? { background: 'var(--accent)' } : { background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+          <Zap size={14} className="inline mr-1" /> Iskanje besed
+        </button>
       </div>
 
       {activeGame === 'zones' && <AlpineZonesGame />}
       {activeGame === 'volcano' && <VolcanoGame />}
       {activeGame === 'pollution' && <PollutionTable />}
+      {activeGame === 'memory' && <MemoryGame />}
+      {activeGame === 'matching' && <CapitalMatchingGame />}
+      {activeGame === 'wordsearch' && <WordSearchGame />}
     </div>
   );
 }
@@ -240,6 +301,320 @@ function PollutionTable() {
         {allRevealed ? <RefreshCw size={14} /> : <Check size={14} />}
         {allRevealed ? 'Skrij vse' : 'Razkrij vse'}
       </button>
+    </div>
+  );
+}
+
+function MemoryGame() {
+  const [cards, setCards] = useState<{ id: number; content: string; matched: boolean; flipped: boolean }[]>([]);
+  const [flipped, setFlipped] = useState<number[]>([]);
+  const [moves, setMoves] = useState(0);
+  const [completed, setCompleted] = useState(false);
+
+  useEffect(() => {
+    const allCards = memoryPairs.flatMap(p => [
+      { id: p.id * 2, content: p.term, matched: false, flipped: false },
+      { id: p.id * 2 + 1, content: p.match, matched: false, flipped: false },
+    ]);
+    setCards(allCards.sort(() => Math.random() - 0.5));
+  }, []);
+
+  const flipCard = (id: number) => {
+    if (flipped.length === 2 || cards[id].matched || cards[id].flipped) return;
+
+    const newFlipped = [...flipped, id];
+    const newCards = [...cards];
+    newCards[id].flipped = true;
+    setFlipped(newFlipped);
+    setCards(newCards);
+
+    if (newFlipped.length === 2) {
+      setMoves(m => m + 1);
+      const [first, second] = newFlipped;
+      if (cards[first].content === cards[second].content) {
+        newCards[first].matched = true;
+        newCards[second].matched = true;
+        setCards(newCards);
+        setFlipped([]);
+        if (newCards.every(c => c.matched)) setCompleted(true);
+      } else {
+        setTimeout(() => {
+          newCards[first].flipped = false;
+          newCards[second].flipped = false;
+          setCards(newCards);
+          setFlipped([]);
+        }, 1000);
+      }
+    }
+  };
+
+  const resetGame = () => {
+    const allCards = memoryPairs.flatMap(p => [
+      { id: p.id * 2, content: p.term, matched: false, flipped: false },
+      { id: p.id * 2 + 1, content: p.match, matched: false, flipped: false },
+    ]);
+    setCards(allCards.sort(() => Math.random() - 0.5));
+    setFlipped([]);
+    setMoves(0);
+    setCompleted(false);
+  };
+
+  return (
+    <div className="card space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold">Spominske kartice</h3>
+        <div className="flex items-center gap-3">
+          <div className="streak-counter" style={{ background: 'var(--bg-secondary)' }}>
+            <span className="streak-fire">🔥</span> {moves} potez
+          </div>
+        </div>
+      </div>
+      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+        Poišči ujemajoče pare (gorstvo - lokacija, morje - opis).
+      </p>
+
+      <div className="grid grid-cols-4 gap-2">
+        {cards.map((card, idx) => (
+          <button
+            key={card.id}
+            onClick={() => flipCard(idx)}
+            disabled={card.matched || flipped.length === 2}
+            className={`aspect-square rounded-lg text-xs font-medium flex items-center justify-center p-2 transition-all ${card.flipped ? 'animate-pulse' : ''}`}
+            style={{
+              background: card.flipped || card.matched ? 'var(--accent)' : 'var(--bg-secondary)',
+              color: card.flipped || card.matched ? '#fff' : 'var(--text-muted)',
+              opacity: card.matched ? 0.5 : 1,
+              transform: card.flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+            }}
+          >
+            {card.flipped || card.matched ? card.content : '?'}
+          </button>
+        ))}
+      </div>
+
+      {completed && (
+        <div className="text-center py-3 animate-fade-in" style={{ background: '#22c55e15' }}>
+          <div className="badge badge-gold mb-2">
+            <Star size={12} /> KONČANO!
+          </div>
+          <p className="font-medium" style={{ color: 'var(--success)' }}>
+            <Trophy size={16} className="inline mr-1" /> {moves} potez
+          </p>
+          <button onClick={resetGame} className="btn-primary text-sm mt-2 inline-flex items-center gap-1.5">
+            <RefreshCw size={14} /> Nova igra
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CapitalMatchingGame() {
+  const [score, setScore] = useState(0);
+  const [current, setCurrent] = useState(0);
+  const [selectedCapital, setSelectedCapital] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [shuffledCapitals, setShuffledCapitals] = useState<string[]>([]);
+
+  useEffect(() => {
+    setShuffledCapitals([...countryCapitals.map(c => c.capital)].sort(() => Math.random() - 0.5));
+  }, [current]);
+
+  const handleCapitalClick = (capital: string) => {
+    if (feedback) return;
+    setSelectedCapital(capital);
+    const correct = countryCapitals[current].capital === capital;
+    setFeedback(correct ? 'correct' : 'wrong');
+    if (correct) setScore(s => s + 1);
+    setTimeout(() => {
+      if (correct && current < countryCapitals.length - 1) {
+        setCurrent(c => c + 1);
+        setSelectedCapital(null);
+        setFeedback(null);
+      } else if (correct) {
+        setSelectedCapital(null);
+        setFeedback(null);
+      } else {
+        setFeedback(null);
+      }
+    }, 1000);
+  };
+
+  const resetGame = () => {
+    setScore(0);
+    setCurrent(0);
+    setSelectedCapital(null);
+    setFeedback(null);
+  };
+
+  if (current >= countryCapitals.length) {
+    const percentage = Math.round((score / countryCapitals.length) * 100);
+    const badgeClass = percentage >= 80 ? 'badge-gold' : percentage >= 60 ? 'badge-silver' : 'badge-bronze';
+    return (
+      <div className="card text-center py-6 animate-fade-in">
+        <h3 className="font-semibold mb-2">Države - Mesta</h3>
+        <p className="text-3xl font-bold mb-2" style={{ color: 'var(--accent)' }}>{score} / {countryCapitals.length}</p>
+        <div className={`badge ${badgeClass} mb-4`}>
+          <Star size={12} /> {percentage}% natančnost
+        </div>
+        <button onClick={resetGame} className="btn-primary text-sm inline-flex items-center gap-1.5">
+          <RefreshCw size={14} /> Nova igra
+        </button>
+      </div>
+    );
+  }
+
+  const country = countryCapitals[current];
+
+  return (
+    <div className="card space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold">Države - Mesta</h3>
+        <div className="flex items-center gap-2">
+          <div className="streak-counter" style={{ background: 'var(--bg-secondary)' }}>
+            <span className="streak-fire">🔥</span> {score} točk
+          </div>
+        </div>
+      </div>
+      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+        Izberi pravilno glavno mesto za vsako državo.
+      </p>
+
+      <div className="text-center py-6 animate-pulse" style={{ background: 'var(--bg-secondary)' }}>
+        <div className="text-3xl font-bold mb-2" style={{ color: 'var(--accent)' }}>{country.country}</div>
+        <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Katero je glavno mesto?</div>
+      </div>
+
+      {feedback && (
+        <div className={`text-center py-2 text-sm font-medium ${feedback === 'correct' ? 'animate-bounce' : 'animate-shake'}`} style={{ background: feedback === 'correct' ? '#22c55e15' : '#ef444415', color: feedback === 'correct' ? 'var(--success)' : 'var(--danger)' }}>
+          {feedback === 'correct' ? <><Check size={14} className="inline mr-1" /> Pravilno!</> : <><X size={14} className="inline mr-1" /> Napačno! {country.capital}</>}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        {shuffledCapitals.slice(0, 4).map(capital => (
+          <button
+            key={capital}
+            onClick={() => handleCapitalClick(capital)}
+            disabled={!!feedback}
+            className="p-3 rounded-lg text-sm font-medium transition-all"
+            style={{
+              background: selectedCapital === capital ? 'var(--accent)' : 'var(--bg-secondary)',
+              color: selectedCapital === capital ? '#fff' : 'var(--text-primary)',
+              opacity: feedback ? 0.5 : 1,
+            }}
+          >
+            {capital}
+          </button>
+        ))}
+      </div>
+
+      <button onClick={resetGame} className="btn-secondary text-sm inline-flex items-center gap-1.5">
+        <RefreshCw size={14} /> Ponovi
+      </button>
+    </div>
+  );
+}
+
+function WordSearchGame() {
+  const [selectedCells, setSelectedCells] = useState<[number, number][]>([]);
+  const [foundWords, setFoundWords] = useState<Set<string>>(new Set());
+  const [currentSelection, setCurrentSelection] = useState<[number, number][]>([]);
+
+  const toggleCell = (row: number, col: number) => {
+    if (currentSelection.length === 0) {
+      setCurrentSelection([[row, col]]);
+    } else {
+      const [lastRow, lastCol] = currentSelection[currentSelection.length - 1];
+      const isAdjacent = Math.abs(row - lastRow) <= 1 && Math.abs(col - lastCol) <= 1;
+      const isSameDirection = currentSelection.length > 1 &&
+        (row - currentSelection[currentSelection.length - 2][0] === lastRow - currentSelection[currentSelection.length - 2][0]) &&
+        (col - currentSelection[currentSelection.length - 2][1] === lastCol - currentSelection[currentSelection.length - 2][1]);
+
+      if (isAdjacent && isSameDirection) {
+        setCurrentSelection([...currentSelection, [row, col]]);
+      } else if (currentSelection.length === 1 && isAdjacent) {
+        setCurrentSelection([...currentSelection, [row, col]]);
+      } else {
+        checkWord();
+        setCurrentSelection([[row, col]]);
+      }
+    }
+  };
+
+  const checkWord = () => {
+    if (currentSelection.length < 2) return;
+    const word = currentSelection.map(([r, c]) => wordSearchGrid[r][c]).join('');
+    const matched = wordSearchWords.find(w => w.word === word);
+    if (matched && !foundWords.has(word)) {
+      setFoundWords(prev => new Set([...prev, word]));
+      setSelectedCells(prev => [...prev, ...currentSelection]);
+    }
+  };
+
+  const allFound = wordSearchWords.every(w => foundWords.has(w.word));
+
+  return (
+    <div className="card space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold">Iskanje besed</h3>
+        <div className="flex items-center gap-2">
+          <div className="streak-counter" style={{ background: 'var(--bg-secondary)' }}>
+            <span className="streak-fire">🔥</span> {foundWords.size} / {wordSearchWords.length}
+          </div>
+        </div>
+      </div>
+      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+        Poišči skrite besede v mreži. Klikni na začetno in končno črko besede.
+      </p>
+
+      <div className="grid grid-cols-10 gap-0.5" style={{ maxWidth: 'fit-content', margin: '0 auto' }}>
+        {wordSearchGrid.map((row, r) =>
+          row.map((letter, c) => {
+            const isSelected = currentSelection.some(([sr, sc]) => sr === r && sc === c);
+            const isFound = selectedCells.some(([sr, sc]) => sr === r && sc === c);
+            return (
+              <button
+                key={`${r}-${c}`}
+                onClick={() => toggleCell(r, c)}
+                className={`w-8 h-8 text-xs font-bold flex items-center justify-center rounded transition-all ${isSelected ? 'animate-pulse' : ''}`}
+                style={{
+                  background: isFound ? 'var(--success)' : isSelected ? 'var(--accent)' : 'var(--bg-secondary)',
+                  color: isFound ? '#fff' : isSelected ? '#fff' : 'var(--text-primary)',
+                }}
+              >
+                {letter}
+              </button>
+            );
+          })
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        {wordSearchWords.map(({ word, hint }) => {
+          const found = foundWords.has(word);
+          return (
+            <div key={word} className={`p-2 rounded ${found ? 'animate-fade-in' : ''}`} style={{ background: found ? '#22c55e15' : 'var(--bg-secondary)', opacity: found ? 1 : 0.6 }}>
+              <div className="font-medium">{found ? <Check size={12} className="inline mr-1" style={{ color: 'var(--success)' }} /> : ''}{word}</div>
+              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{hint}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {allFound && (
+        <div className="text-center py-3 animate-fade-in" style={{ background: '#22c55e15' }}>
+          <div className="badge badge-gold mb-2">
+            <Star size={12} /> VSE BESDE!
+          </div>
+          <p className="font-medium" style={{ color: 'var(--success)' }}>
+            <Trophy size={16} className="inline mr-1" /> KONČANO!
+          </p>
+          <button onClick={() => { setSelectedCells([]); setCurrentSelection([]); setFoundWords(new Set()); }} className="btn-primary text-sm mt-2 inline-flex items-center gap-1.5">
+            <RefreshCw size={14} /> Nova igra
+          </button>
+        </div>
+      )}
     </div>
   );
 }
